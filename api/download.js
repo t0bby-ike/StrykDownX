@@ -10,15 +10,24 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Validate the video URL
-        const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-        if (!urlRegex.test(videoUrl)) {
-            return res.status(400).json({ error: 'Invalid video URL' });
+        // Extract the tweet ID from the video URL
+        const tweetId = videoUrl.split('/').pop().split('?')[0];
+
+        // Use Twitsave API to get download links
+        const twitsaveResponse = await axios.get(`https://twitsave.com/info?url=${tweetId}`);
+
+        // Check if the API returned valid data
+        if (!twitsaveResponse.data || !twitsaveResponse.data.variants) {
+            throw new Error('Failed to fetch video data from Twitsave');
         }
 
+        // Get the highest quality video URL
+        const videoData = twitsaveResponse.data.variants.find(v => v.quality === quality) || twitsaveResponse.data.variants[0];
+        const downloadUrl = videoData.url;
+
         // Download the video
-        const response = await axios({
-            url: videoUrl,
+        const videoResponse = await axios({
+            url: downloadUrl,
             method: 'GET',
             responseType: 'stream',
         });
@@ -27,7 +36,7 @@ module.exports = async (req, res) => {
         const tempFilePath = path.join('/tmp', `temp_video_${Date.now()}.mp4`);
         const writer = fs.createWriteStream(tempFilePath);
 
-        response.data.pipe(writer);
+        videoResponse.data.pipe(writer);
 
         writer.on('finish', () => {
             // Verify the download completion
