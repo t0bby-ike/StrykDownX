@@ -10,6 +10,12 @@ module.exports = async (req, res) => {
     }
 
     try {
+        // Validate the video URL
+        const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+        if (!urlRegex.test(videoUrl)) {
+            return res.status(400).json({ error: 'Invalid video URL' });
+        }
+
         // Download the video
         const response = await axios({
             url: videoUrl,
@@ -18,7 +24,7 @@ module.exports = async (req, res) => {
         });
 
         // Create a temporary file path
-        const tempFilePath = path.join('/tmp', 'temp_video.mp4');
+        const tempFilePath = path.join('/tmp', `temp_video_${Date.now()}.mp4`);
         const writer = fs.createWriteStream(tempFilePath);
 
         response.data.pipe(writer);
@@ -48,6 +54,6 @@ module.exports = async (req, res) => {
         });
     } catch (error) {
         console.error('Error downloading video:', error);
-        res.status(500).json({ error: 'Failed to download video' });
+        res.status(500).json({ error: 'Failed to download video. Please check the URL and try again.' });
     }
 };
