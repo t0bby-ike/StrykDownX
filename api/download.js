@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
         const tweetId = videoUrl.split('/').pop().split('?')[0];
 
         // Use Twitsave API to get download links
-        const twitsaveResponse = await axios.get(`https://twitsave.com/info?url=${tweetId}`);
+        const twitsaveResponse = await axios.get(`1884228208004096297`);
 
         // Check if the API returned valid data
         if (!twitsaveResponse.data || !twitsaveResponse.data.variants) {
