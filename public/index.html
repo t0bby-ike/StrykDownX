@@ -1,1 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drstryk 𝕏 Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Comic Neue', cursive;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+            user-select: none; /* Prevent text selection */
+            position: relative;
+        }
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+            z-index: 1; /* Ensure content is above watermarks */
+        }
+        body.dark-mode .container {
+            background-color: rgba(38, 38, 38, 0.9);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #1DA1F2; /* Light Twitter Blue */
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
 
+        /* Dark Mode Toggle Switch */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 2; /* Ensure toggle is above watermarks */
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #1DA1F2; /* Light Twitter Blue */
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Watermark Styles */
+        .watermark {
+            position: absolute;
+            font-size: 20px; /* Smaller size */
+            color: rgba(29, 161, 242, 0.7); /* Light Twitter Blue with 40% opacity */
+            user-select: none;
+            pointer-events: none; /* Ensure watermarks don't interfere with clicks */
+            z-index: 0; /* Ensure watermarks are behind content */
+        }
+
+        /* Panel Styles */
+        .panel {
+            background-color: rgba(29, 161, 242, 0.1); /* Light Twitter Blue with opacity */
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        body.dark-mode .panel {
+            background-color: rgba(29, 161, 242, 0.2); /* Darker for dark mode */
+        }
+        .panel:hover {
+            transform: scale(1.02);
+            background-color: rgba(29, 161, 242, 0.2); /* Slightly darker on hover */
+        }
+        body.dark-mode .panel:hover {
+            background-color: rgba(29, 161, 242, 0.3); /* Even darker for dark mode */
+        }
+        .panel:active {
+            transform: scale(0.98);
+        }
+        .panel h2 {
+            margin: 0;
+            font-size: 1.8em;
+            color: #1DA1F2; /* Light Twitter Blue */
+        }
+        .panel-content {
+            display: none;
+            padding-top: 15px;
+            font-size: 1.1em;
+            color: #555;
+        }
+        body.dark-mode .panel-content {
+            color: #ddd;
+        }
+        .panel-content.show {
+            display: block;
+            animation: stretch 0.5s ease;
+        }
+        @keyframes stretch {
+            0% { transform: scaleY(0); opacity: 0; }
+            100% { transform: scaleY(1); opacity: 1; }
+        }
+
+        /* Download Options */
+        .download-options {
+            display: none;
+            margin-top: 15px;
+            animation: slideIn 0.5s ease;
+        }
+        .download-options.show {
+            display: block;
+        }
+        @keyframes slideIn {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .download-options label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 1.1em;
+            color: #1DA1F2; /* Light Twitter Blue */
+        }
+        .download-options select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #1DA1F2; /* Light Twitter Blue */
+            background-color: #fff;
+            font-family: 'Comic Neue', cursive;
+            font-size: 1em;
+            color: #333;
+        }
+        body.dark-mode .download-options select {
+            background-color: #444;
+            color: #fff;
+            border-color: #1DA1F2; /* Light Twitter Blue */
+        }
+
+        /* Buttons */
+        .download-button {
+            background-color: #1DA1F2; /* Light Twitter Blue */
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            margin-top: 10px;
+        }
+        .download-button:hover {
+            background-color: #1991db; /* Slightly darker blue */
+            transform: scale(1.1);
+        }
+        .download-button:active {
+            transform: scale(0.9);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
+        }
+        body.dark-mode .progress-bar {
+            background-color: #444;
+        }
+        .progress-bar-inner {
+            width: 0;
+            height: 100%;
+            background-color: #1DA1F2; /* Light Twitter Blue */
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #777;
+            text-align: center;
+        }
+        body.dark-mode footer {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dark Mode Toggle Switch -->
+    <div class="dark-mode-toggle">
+        <label class="toggle-switch">
+            <input type="checkbox" id="dark-mode-toggle">
+            <span class="slider"></span>
+        </label>
+        <span>Dark Mode</span>
+    </div>
+
+    <div class="container">
+        <h1>Drstryks 𝕏 Downloader</h1>
+        
+        <div class="panel" onclick="togglePanel('how-it-works')">
+            <h2>How It Works 🎥</h2>
+            <div class="panel-content" id="how-it-works">
+                <p>Paste the URL of the 𝕏 video you want to download in the input field below. Click the "Download" button, and you'll see options for quality and format. Choose your preferences, and the video will start downloading instantly!</p>
+            </div>
+        </div>
+        
+        <div class="panel" onclick="togglePanel('about')">
+            <h2>About 📖</h2>
+            <div class="panel-content" id="about">
+                <p>This tool is designed to make downloading 𝕏 videos easy and fun! It's free to use, and we respect your privacy. No data is stored or shared. Enjoy your downloads!</p>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Download 𝕏 Video ⬇️</h2>
+            <input type="text" id="video-url" placeholder="Paste 𝕏 Video URL here" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #1DA1F2; background-color: #fff; font-family: 'Comic Neue', cursive; font-size: 1em;">
+            <button class="download-button" onclick="showDownloadOptions()">Download</button>
+            <div class="download-options" id="download-options">
+                <label for="quality">Select Quality:</label>
+                <select id="quality">
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                    <option value="360p">360p</option>
+                </select>
+                <label for="format">Select Format:</label>
+                <select id="format">
+                    <option value="mp4">MP4</option>
+                    <option value="gif">GIF</option>
+                </select>
+                <button class="download-button" onclick="startDownload()">Start Download</button>
+            </div>
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-bar-inner" id="progress-bar-inner"></div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer>
+            &copy; 2023 Drstryk 𝕏 Downloader. All rights reserved.
+        </footer>
+    </div>
+
+    <script>
+        // Generate Random Watermarks
+        function generateWatermarks() {
+            const watermarkCount = 70; // Number of watermarks
+            const watermarkContainer = document.createElement('div');
+            watermarkContainer.style.position = 'fixed';
+            watermarkContainer.style.top = '0';
+            watermarkContainer.style.left = '0';
+            watermarkContainer.style.width = '100%';
+            watermarkContainer.style.height = '100%';
+            watermarkContainer.style.pointerEvents = 'none';
+            document.body.appendChild(watermarkContainer);
+
+            for (let i = 0; i < watermarkCount; i++) {
+                const watermark = document.createElement('div');
+                watermark.className = 'watermark';
+                watermark.textContent = '𝕏';
+                watermark.style.top = `${Math.random() * 100}%`;
+                watermark.style.left = `${Math.random() * 100}%`;
+                watermark.style.transform = `rotate(${Math.random() * 360}deg)`;
+                watermarkContainer.appendChild(watermark);
+            }
+        }
+
+        // Toggle dark mode
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        darkModeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // Toggle panels
+        function togglePanel(id) {
+            const panelContent = document.getElementById(id);
+            panelContent.classList.toggle('show');
+        }
+
+        // Show download options
+        function showDownloadOptions() {
+            const downloadOptions = document.getElementById('download-options');
+            downloadOptions.classList.toggle('show');
+        }
+
+        // Start download
+        async function startDownload() {
+            const videoUrl = document.getElementById('video-url').value;
+            const quality = document.getElementById('quality').value;
+            const format = document.getElementById('format').value;
+
+            if (!videoUrl) {
+                alert('Please paste a valid 𝕏 Video URL.');
+                return;
+            }
+
+            const progressBar = document.getElementById('progress-bar');
+            const progressBarInner = document.getElementById('progress-bar-inner');
+            progressBar.style.display = 'block';
+            progressBarInner.style.width = '0%';
+
+            try {
+                const response = await fetch('https://stryk-down-x.vercel.app/api/download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ videoUrl, quality, format }),
+});
+
+                if (!response.ok) {
+                    throw new Error('Failed to download video');
+                }
+
+                // Simulate progress bar
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    progressBarInner.style.width = `${progress}%`;
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        // Verify completion
+                        verifyCompletion();
+                    }
+                }, 300);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to download video. Please try again.');
+                progressBar.style.display = 'none';
+            }
+        }
+
+        // Verify download completion
+        async function verifyCompletion() {
+            try {
+                const response = await fetch('https://stryk-down-x.vercel.app/api/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+});
+
+                if (response.ok) {
+                    // Trigger confetti animation
+                    document.body.classList.add('animate__animated', 'animate__tada');
+                    setTimeout(() => {
+                        document.body.classList.remove('animate__animated', 'animate__tada');
+                    }, 1000);
+                } else {
+                    alert('Download verification failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error verifying download:', error);
+                alert('Failed to verify download. Please try again.');
+            }
+        }
+
+        // Prevent copying, right-click, and keyboard shortcuts
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 'c' || e.key === 'C')) {
+                e.preventDefault();
+            }
+        });
+
+        // Generate watermarks on page load
+        generateWatermarks();
+    </script>
+</body>
+</html>
