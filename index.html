@@ -364,11 +364,11 @@
             progressBarInner.style.width = '0%';
 
             try {
-                const response = await fetch('/api/download', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ videoUrl, quality, format }),
-                });
+                const response = await fetch('https://your-project.vercel.app/api/download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ videoUrl, quality, format }),
+});
 
                 if (!response.ok) {
                     throw new Error('Failed to download video');
