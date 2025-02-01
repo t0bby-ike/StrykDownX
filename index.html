@@ -364,7 +364,7 @@
             progressBarInner.style.width = '0%';
 
             try {
-                const response = await fetch('https://xsave.drstryk.com/api/download', {
+                const response = await fetch('https://stryk-down-x.vercel.app/api/download', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ videoUrl, quality, format }),
@@ -395,7 +395,7 @@
         // Verify download completion
         async function verifyCompletion() {
             try {
-                const response = await fetch('https://xsave.drstryk.com/api/verify', {
+                const response = await fetch('https://stryk-down-x.vercel.app/api/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
 });
